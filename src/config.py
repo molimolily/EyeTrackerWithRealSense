@@ -84,12 +84,58 @@ class ConfigWindow:
         self.port_entry = tk.Entry(self.root)
         self.port_entry.insert(0, "8000")
         self.port_entry.grid(row=row, column=1, padx=10, pady=10)
+        # OSC address entries
+        row += 1
+        tk.Label(self.root, text="OSC Right Addr:").grid(row=row, column=0, padx=10, pady=5, sticky="w")
+        self.osc_right_entry = tk.Entry(self.root)
+        self.osc_right_entry.insert(0, "/eye/right")
+        self.osc_right_entry.grid(row=row, column=1, padx=10, pady=5)
+        self.osc_right_var = tk.IntVar(value=1)
+        osc_right_cb = tk.Checkbutton(self.root, variable=self.osc_right_var, command=self.toggle_osc_right_entry)
+        osc_right_cb.grid(row=row, column=2, padx=5, pady=5)
+        row += 1
+        tk.Label(self.root, text="OSC Left Addr:").grid(row=row, column=0, padx=10, pady=5, sticky="w")
+        self.osc_left_entry = tk.Entry(self.root)
+        self.osc_left_entry.insert(0, "/eye/left")
+        self.osc_left_entry.grid(row=row, column=1, padx=10, pady=5)
+        self.osc_left_var = tk.IntVar(value=1)
+        osc_left_cb = tk.Checkbutton(self.root, variable=self.osc_left_var, command=self.toggle_osc_left_entry)
+        osc_left_cb.grid(row=row, column=2, padx=5, pady=5)
+        row += 1
+        tk.Label(self.root, text="OSC Center Addr:").grid(row=row, column=0, padx=10, pady=5, sticky="w")
+        self.osc_center_entry = tk.Entry(self.root)
+        self.osc_center_entry.insert(0, "/eye/center")
+        self.osc_center_entry.grid(row=row, column=1, padx=10, pady=5)
+        self.osc_center_var = tk.IntVar(value=1)
+        osc_center_cb = tk.Checkbutton(self.root, variable=self.osc_center_var, command=self.toggle_osc_center_entry)
+        osc_center_cb.grid(row=row, column=2, padx=5, pady=5)
+
         # Buttons
         row += 1
         btn_frame = tk.Frame(self.root)
         btn_frame.grid(row=row, column=0, columnspan=2, pady=10)
         tk.Button(btn_frame, text="Start", command=self.on_start, width=10).pack(side="left", padx=10)
         tk.Button(btn_frame, text="Exit", command=self.on_exit, width=10).pack(side="left", padx=10)
+        # 初期状態でエントリの有効/無効を反映
+        self._init_osc_entry_states()
+
+    def toggle_osc_right_entry(self):
+        state = "normal" if self.osc_right_var.get() else "disabled"
+        self.osc_right_entry.config(state=state)
+
+    def toggle_osc_left_entry(self):
+        state = "normal" if self.osc_left_var.get() else "disabled"
+        self.osc_left_entry.config(state=state)
+
+    def toggle_osc_center_entry(self):
+        state = "normal" if self.osc_center_var.get() else "disabled"
+        self.osc_center_entry.config(state=state)
+
+    # 初期状態も反映
+    def _init_osc_entry_states(self):
+        self.toggle_osc_right_entry()
+        self.toggle_osc_left_entry()
+        self.toggle_osc_center_entry()
 
     def on_device_selected(self, event=None):
         try:
@@ -184,6 +230,13 @@ class ConfigWindow:
         except Exception:
             messagebox.showerror("Error", "Invalid profile selection")
             return
+        # OSCアドレスも保存
+        self.config["osc_right_addr"] = self.osc_right_entry.get().strip()
+        self.config["osc_left_addr"] = self.osc_left_entry.get().strip()
+        self.config["osc_center_addr"] = self.osc_center_entry.get().strip()
+        self.config["osc_right_enable"] = bool(self.osc_right_var.get())
+        self.config["osc_left_enable"] = bool(self.osc_left_var.get())
+        self.config["osc_center_enable"] = bool(self.osc_center_var.get())
         self.root.destroy()
 
     def on_exit(self):

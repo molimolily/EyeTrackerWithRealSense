@@ -27,8 +27,16 @@ def main():
         info_text = f"{width}x{height} @ {fps}fps, {ip_addr} / {port}, USB{device_usb}"
 
         view = RealSenseView(f"Eyetracker {device_name} (S/N:{selected_serial})", info_text)
-        osc_sender = OSCSender(ip_addr, port)  # New OSC sender instance
-        controller = Controller(model, view, info_text, osc_sender)  # Pass osc_sender
+        osc_sender = OSCSender(
+            ip_addr, port,
+            right_addr=config.get("osc_right_addr", "/eye/right"),
+            left_addr=config.get("osc_left_addr", "/eye/left"),
+            center_addr=config.get("osc_center_addr", "/eye/center"),
+            right_enable=config.get("osc_right_enable", True),
+            left_enable=config.get("osc_left_enable", True),
+            center_enable=config.get("osc_center_enable", True)
+        )
+        controller = Controller(model, view, info_text, osc_sender)
 
         def on_close():
             controller.stop()
