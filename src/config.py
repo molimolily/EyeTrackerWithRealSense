@@ -33,23 +33,35 @@ class ConfigWindow:
             row=row, column=0, padx=10, pady=10, sticky="w"
         )
         self.device_var = tk.StringVar()
-        device_combobox = ttk.Combobox(
+        self.device_combobox = ttk.Combobox(
             self.root, textvariable=self.device_var, values=device_options, state="readonly", width=40
         )
-        device_combobox.current(0)
-        device_combobox.grid(row=row, column=1, padx=10, pady=10)
+        self.device_combobox.current(0)
+        self.device_combobox.grid(row=row, column=1, padx=10, pady=10)
+
         # Profile selection
         row += 1
         tk.Label(self.root, text="Select profile:").grid(
             row=row, column=0, padx=10, pady=10, sticky="w"
         )
-        profiles = ["640x480 @ 30fps", "640x480 @ 60fps", "1280x720 @ 30fps"]
         self.profile_var = tk.StringVar()
-        profile_combobox = ttk.Combobox(
-            self.root, textvariable=self.profile_var, values=profiles, state="readonly", width=20
+        self.profile_combobox = ttk.Combobox(
+            self.root, textvariable=self.profile_var, values=[], state="readonly", width=20
         )
-        profile_combobox.current(0)
-        profile_combobox.grid(row=row, column=1, padx=10, pady=10)
+        self.profile_combobox.grid(row=row, column=1, padx=10, pady=10)
+
+        # デバイス選択時にプロファイルを更新
+        self.device_combobox.bind("<<ComboboxSelected>>", self.on_device_selected)
+        # 初期化時にも一度呼ぶ
+        self.on_device_selected()
+        # デフォルトで640x480 @ 30fpsがあれば選択
+        default_profile = "640x480 @ 30fps"
+        profiles = self.profile_combobox["values"]
+        if default_profile in profiles:
+            self.profile_combobox.set(default_profile)
+        elif profiles:
+            self.profile_combobox.current(0)
+
         # Flip checkbox
         row += 1
         tk.Label(self.root, text="Flip image:").grid(
@@ -78,6 +90,58 @@ class ConfigWindow:
         btn_frame.grid(row=row, column=0, columnspan=2, pady=10)
         tk.Button(btn_frame, text="Start", command=self.on_start, width=10).pack(side="left", padx=10)
         tk.Button(btn_frame, text="Exit", command=self.on_exit, width=10).pack(side="left", padx=10)
+
+    def on_device_selected(self, event=None):
+        try:
+            idx = self.device_combobox.current()
+            serial = self.device_serials[idx]
+            profiles = self.get_available_profiles(serial)
+            self.profile_combobox["values"] = profiles
+            if profiles:
+                self.profile_combobox.current(0)
+            else:
+                self.profile_var.set("")
+        except Exception:
+            self.profile_combobox["values"] = []
+            self.profile_var.set("")
+    def get_available_profiles(self, serial):
+        # カラーとデプス両方で同時に利用できるプロファイルのみを抽出
+        ctx = rs.context()
+        for device in ctx.query_devices():
+            if device.get_info(rs.camera_info.serial_number) == serial:
+                color_profiles = set()
+                depth_profiles = set()
+                for s in device.sensors:
+                    try:
+                        # カラーセンサー
+                        if s.get_info(rs.camera_info.name).lower().find('rgb') != -1 or s.get_info(rs.camera_info.name).lower().find('color') != -1:
+                            for p in s.get_stream_profiles():
+                                try:
+                                    v = p.as_video_stream_profile()
+                                    width = v.width()
+                                    height = v.height()
+                                    fps = p.fps()
+                                    color_profiles.add((width, height, fps))
+                                except Exception:
+                                    continue
+                        # デプスセンサー
+                        if s.is_depth_sensor():
+                            for p in s.get_stream_profiles():
+                                try:
+                                    v = p.as_video_stream_profile()
+                                    width = v.width()
+                                    height = v.height()
+                                    fps = p.fps()
+                                    depth_profiles.add((width, height, fps))
+                                except Exception:
+                                    continue
+                    except Exception:
+                        continue
+                # 両方で使えるプロファイルのみ
+                common_profiles = color_profiles & depth_profiles
+                profiles = [f"{w}x{h} @ {f}fps" for (w, h, f) in sorted(common_profiles)]
+                return profiles
+        return []
 
     def on_start(self):
         try:

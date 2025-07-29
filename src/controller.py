@@ -12,10 +12,10 @@ class Controller:
         self.last_fps_update = time.time()
         self.current_fps = 0
         self.osc_sender = osc_sender
-        self.moving_average_processor = MovingAverageProcessor(window=5, threshold=0.15, max_dt=0.5)
-        self.kalman_filter_processor = KalmanFilterProcessor(threshold=0.10)
-        self.kaleman_filter_accel_processor = KalmanFilterAccelProcessor()
-        self.one_euro_filter_processor = OneEuroFilterProcesser(min_cutoff=0.3, beta=0.5, d_cutoff=0.3) 
+        # self.moving_average_processor = MovingAverageProcessor(window=5, threshold=0.15, max_dt=0.5)
+        # self.kalman_filter_processor = KalmanFilterProcessor(threshold=0.10)
+        # self.kaleman_filter_accel_processor = KalmanFilterAccelProcessor()
+        # self.one_euro_filter_processor = OneEuroFilterProcesser(min_cutoff=0.3, beta=0.5, d_cutoff=0.3) 
 
     def update_loop(self):
         if not self.running:
