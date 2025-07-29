@@ -20,15 +20,13 @@ class Controller:
     def update_loop(self):
         if not self.running:
             return
-        start = time.time()
         frame, eye_pos = self.model.process_frame()
-        now = time.time()
-        dt = now - start
-        self.fps_timer.update(dt)
+        self.fps_timer.update()
         if frame is not None:
-            if now - self.last_fps_update >= 0.5:
+            t = time.time()
+            if t - self.last_fps_update >= 0.5:
                 self.current_fps = self.fps_timer.get_fps()
-                self.last_fps_update = now
+                self.last_fps_update = t
             info_text = self.info_text
             fps_text = f"{self.current_fps:.1f} fps"
             eye_pos_text = "eye_pos:"
